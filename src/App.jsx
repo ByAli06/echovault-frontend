@@ -42,29 +42,32 @@ function App() {
   };
 
   const sendToAI = async () => {
-    if (!message) return;
-    const res = await fetch(`${BACKEND_URL}/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ vault_id: vaultId, message, user_id: user.id })
-    });
-    const { response } = await res.json();
-    setAiResponse(response);
-  };
+  if (!message.trim()) return;
+  
+  const res = await fetch(`${BACKEND_URL}/chat`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${user.access_token}`  // <-- YENİ EKLENDİ!
+    },
+    body: JSON.stringify({ 
+      vault_id: vaultId, 
+      message, 
+      user_id: user.id 
+    })
+  });
 
-  if (!user) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center', background: '#000', color: '#fff', minHeight: '100vh', fontFamily: 'Arial' }}>
-        <h1>EchoVault</h1>
-        <p>Oelmeden oence sesini birak.</p>
-        <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} style={{ width: '80%', padding: '12px', margin: '10px 0' }} />
-        <input placeholder="Ad" value={name} onChange={e => setName(e.target.value)} style={{ width: '80%', padding: '12px', margin: '10px 0' }} />
-        <button onClick={signUp} style={{ padding: '14px 32px', background: '#fff', color: '#000', borderRadius: '8px' }}>
-          Kaydol
-        </button>
-      </div>
-    );
+  if (!res.ok) {
+    const error = await res.text();
+    console.error("Backend error:", error);
+    alert("AI cevap veremedi: " + error);
+    return;
   }
+
+  const { response } = await res.json();
+  setAiResponse(response);
+  setMessage('');
+};
 
   return (
     <div style={{ padding: '40px', maxWidth: '600px', margin: 'auto', background: '#111', color: '#eee' }}>
